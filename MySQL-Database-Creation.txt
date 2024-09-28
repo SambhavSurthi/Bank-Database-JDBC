@@ -1,0 +1,88 @@
+CREATE DATABASE bank;
+USE Bank;
+
+CREATE TABLE Customers (
+    customer_id INT AUTO_INCREMENT PRIMARY KEY,
+    first_name VARCHAR(50) NOT NULL,
+    last_name VARCHAR(50) NOT NULL,
+    email VARCHAR(100) UNIQUE,
+    phone VARCHAR(15) UNIQUE NOT NULL,
+    address VARCHAR(255),
+    city VARCHAR(50),
+    state VARCHAR(50),
+    zip_code VARCHAR(10),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE Accounts (
+    account_number INT AUTO_INCREMENT PRIMARY KEY,
+    customer_id INT,
+    account_type ENUM('SAVINGS', 'CURRENT') NOT NULL,
+    balance DECIMAL(15, 2) DEFAULT 0.00,
+    opened_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (customer_id) REFERENCES Customers(customer_id)
+);
+
+CREATE TABLE Transactions (
+    transaction_id INT AUTO_INCREMENT PRIMARY KEY,
+    sender_account_number INT, -- For transfers, this will store the sender's account number
+    receiver_account_number INT, -- For transfers, this will store the receiver's account number
+    transaction_type ENUM('DEPOSIT', 'WITHDRAWAL', 'TRANSFER'),
+    amount DECIMAL(15, 2) NOT NULL,
+    transaction_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (sender_account_number) REFERENCES Accounts(account_number), -- Sender account reference
+    FOREIGN KEY (receiver_account_number) REFERENCES Accounts(account_number) -- Receiver account reference
+);
+
+CREATE TABLE Loans (
+    loan_id INT AUTO_INCREMENT PRIMARY KEY,
+    account_number INT,
+    loan_type ENUM('PERSONAL', 'HOME', 'CAR') NOT NULL,
+    amount DECIMAL(15, 2) NOT NULL,
+    interest_rate DECIMAL(5, 2),
+    loan_start_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    loan_end_date DATE,
+    FOREIGN KEY (account_number) REFERENCES Accounts(account_number)
+);
+
+SELECT * FROM Customers;
+SELECT * FROM Accounts;
+SELECT * FROM Transactions;
+SELECT * FROM Loans;
+
+SELECT
+    c.customer_id,
+    c.first_name,
+    c.last_name,
+    c.email,
+    c.phone,
+    c.address,
+    c.city,
+    c.state,
+    c.zip_code,
+    a.account_number,
+    a.account_type,
+    a.balance,
+    a.opened_date,
+    t.transaction_id,
+    t.transaction_type,
+    t.amount AS transaction_amount,
+    t.transaction_date,
+    t.sender_account_number,
+    t.receiver_account_number,
+    l.loan_id,
+    l.loan_type,
+    l.amount AS loan_amount,
+    l.interest_rate,
+    l.loan_start_date,
+    l.loan_end_date
+FROM
+    Customers c
+JOIN
+    Accounts a ON c.customer_id = a.customer_id
+LEFT JOIN
+    Transactions t ON a.account_number = t.sender_account_number OR a.account_number = t.receiver_account_number
+LEFT JOIN
+    Loans l ON a.account_number = l.account_number;
+
+
